@@ -6,6 +6,37 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.21] - 2026-07-19
+
+### Fixed
+- The **Replace** watch strategy no longer aborts the whole sync when the watch's high-resolution HR cannot be extracted (a 0.5.20 regression, [#244](https://github.com/drkostas/hevy2garmin/issues/244)). It now keeps the watch activity and merges the sets into it in place, so the workout still syncs and the watch HR is never lost. Only the named-exercise display is dropped when the HR cannot be preserved. HR extraction also tolerates a small clock offset between the Hevy workout window and the watch recording.
+
+## [0.5.20] - 2026-07-18
+
+### Added
+- The watch-activity **Replace** strategy now extracts high-resolution heart-rate samples from the original Garmin FIT and embeds them in the named Hevy replacement before deleting the watch copy. If the source cannot be extracted or restored from backup, replacement stops and preserves the original activity.
+- Sync Hevy routines to Garmin as planned workouts. Maps routine exercises to Garmin workout-service exercise IDs (validated against a real Garmin export), adds timed rest steps between sets, and supports per-routine scheduling (one-off and recurring weekly). Re-sync is checksum-based with a `--force` override, the sync summary reports created vs updated separately, and the dashboard gains a routines page plus a home-screen summary.
+
+## [0.5.19] - 2026-07-14
+
+### Added
+- Safe Garmin upload recovery ([#227](https://github.com/drkostas/hevy2garmin/pull/227), thanks @donndonn). Uploads that fail mid-request (crash/timeout) are parked in a durable `pending_uploads` table instead of being blindly re-uploaded, so an upload that may have reached Garmin never creates a duplicate. Rename/description/watch-delete resume from checkpoints, same-id deletion is blocked, and delete retries are capped. New CLI and web controls to resolve stuck syncs: reconcile (never uploads, adopts an activity only with a start-time match and upload evidence), retry-failed-only, abandon, mark-synced, and skip.
+
+## [0.5.18] - 2026-07-14
+
+### Fixed
+- Python 3.10 compatibility: timestamps with a single fractional-second digit (e.g. `2026-03-15T18:02:00.0`) or a space date/time separator no longer raise `ValueError` on Python 3.10, which the project supports. All ISO-8601 parsing now goes through a shared `parse_iso()` helper that normalizes the fraction width and the `Z`/space separators (previously 15 `datetime.fromisoformat` call sites could fail on 3.10 for such timestamps). (#229)
+
+## [0.5.17] - 2026-07-13
+
+### Fixed
+- The "Not configured" error is now context-aware. On the cloud / GitHub Actions path (DATABASE_URL set) it no longer tells you to run `hevy2garmin init` (a local interactive wizard that can't run in Actions); instead it points you to finish setup in the dashboard and to make sure `DATABASE_URL` matches your deployment's database. (#224)
+
+## [0.5.16] - 2026-07-13
+
+### Fixed
+- Merge mode: when Garmin rejects one exercise's name as an invalid sub-category, only that exercise's name is now stripped instead of every name in the workout. The offender is found by bisecting the payload (the atomic PUT gives no per-exercise error), so the rest of your exercises keep their real names. Falls back to stripping all names only if several exercises are rejected. (#222)
+
 ## [0.5.15] - 2026-07-10
 
 ### Changed
